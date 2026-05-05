@@ -1,6 +1,8 @@
 import express from "express";
 import cors from "cors";
 
+console.log("TOUCAN_API_KEY =", process.env.TOUCAN_API_KEY);
+
 const app = express();
 
 app.use(cors());
