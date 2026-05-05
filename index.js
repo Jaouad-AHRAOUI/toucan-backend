@@ -27,16 +27,27 @@ app.get("/token", async (req, res) => {
 
     const data = await response.json();
 
+    if (!data.token) {
+      return res.status(500).json({
+        error: "Token not returned by Toucan API",
+        details: data
+      });
+    }
+
     res.json({
       token: data.token,
       expiresIn: data.expiresIn
     });
 
   } catch (err) {
+    console.error(err);
     res.status(500).json({ error: "Failed to generate token" });
   }
 });
 
-app.listen(3000, () => {
-  console.log("Server running");
+// ✅ IMPORTANT FIX RENDER PORT
+const port = process.env.PORT || 3000;
+
+app.listen(port, () => {
+  console.log("Server running on port", port);
 });
