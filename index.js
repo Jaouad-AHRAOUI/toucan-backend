@@ -1,20 +1,33 @@
 import express from "express";
 import cors from "cors";
 
-console.log("TOUCAN_API_KEY =", process.env.TOUCAN_API_KEY);
-
 const app = express();
 
 app.use(cors());
 app.use(express.json());
 
+// Route de test simple
+app.get("/", (req, res) => {
+  res.json({ status: "ok", message: "Backend Toucan running" });
+});
+
 app.get("/token", async (req, res) => {
   try {
+    const apiKey = process.env.TOUCAN_API_KEY;
+
+    console.log("TOUCAN_API_KEY exists:", !!apiKey);
+
+    if (!apiKey) {
+      return res.status(500).json({
+        error: "TOUCAN_API_KEY is missing in environment variables"
+      });
+    }
+
     const response = await fetch("https://toucanai.cloud/embed/generate-token", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "x-api-key": process.env.TOUCAN_API_KEY
+        "x-api-key": apiKey
       },
       body: JSON.stringify({
         user: {
@@ -27,7 +40,27 @@ app.get("/token", async (req, res) => {
       })
     });
 
-    const data = await response.json();
+    const rawText = await response.text();
+
+    console.log("TOUCAN STATUS:", response.status);
+    console.log("TOUCAN RAW RESPONSE:", rawText);
+
+    let data;
+    try {
+      data = JSON.parse(rawText);
+    } catch {
+      return res.status(500).json({
+        error: "Toucan response is not valid JSON",
+        raw: rawText
+      });
+    }
+
+    if (!response.ok) {
+      return res.status(response.status).json({
+        error: "Toucan API returned an error",
+        details: data
+      });
+    }
 
     if (!data.token) {
       return res.status(500).json({
@@ -40,14 +73,15 @@ app.get("/token", async (req, res) => {
       token: data.token,
       expiresIn: data.expiresIn
     });
-
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Failed to generate token" });
+    console.error("TOKEN ERROR:", err);
+    res.status(500).json({
+      error: "Failed to generate token",
+      details: err.message
+    });
   }
 });
 
-// ✅ IMPORTANT FIX RENDER PORT
 const port = process.env.PORT || 3000;
 
 app.listen(port, () => {
