@@ -23,7 +23,7 @@ app.get("/token", async (req, res) => {
       });
     }
 
-    const response = await fetch("https://toucanai.cloud/embed/generate-token", {
+    const response = await fetch("https://toucanai.cloud/api/embed/generate-token", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
